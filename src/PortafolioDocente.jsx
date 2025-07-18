@@ -1,73 +1,134 @@
 import React, { useState } from 'react';
+import { useContext } from 'react';
+import { AuthContext } from './AuthContext';
+import RegistrarUsuario from './RegistrarUsuario';
+import IniciarSesion from './IniciarSesion';
+// Cambia la ruta del import - intenta con estas opciones:
+import logoUnsaac from './assets/logo-unsaac.png';
+import Informacion from './Informacion';
+
+console.log('Logo path:', logoUnsaac);
 
 const PortafolioDocente = () => {
+  const cerrarLogin = () => {
+    setShowLogin(false);
+  };
+
+  const cerrarRegistro = () => {
+    setShowRegistro(false);
+  };
   const [showHelp, setShowHelp] = useState(false);
+  const [showRegistro, setShowRegistro] = useState(false);
+  const [showLogin, setShowLogin] = useState(false);
+  const { usuarioActual } = useContext(AuthContext);
 
   const handleLogin = () => {
-    alert('Funcionalidad de Iniciar Sesión');
+    setShowLogin(true);
   };
 
   const handleRegister = () => {
-    alert('Funcionalidad de Registro');
+    setShowRegistro(true);
   };
 
+  // Soluciona el error: toggleHelp is not defined
   const toggleHelp = () => {
-    setShowHelp(!showHelp);
+    setShowHelp((prev) => !prev);
   };
-
   return (
     <div style={styles.container}>
-      {/* Header diagonal con logo y título */}
+      {/* Header diagonal con logo y título - SIEMPRE VISIBLE */}
       <div style={styles.header}>
         <div style={styles.headerOverlay}></div>
         <div style={styles.headerContent}>
+          {/* Título a la izquierda */}
           <div style={styles.titleSection}>
-            <h1 style={styles.title}>Portafolio de</h1>
-            <h1 style={styles.title}>Docente</h1>
+            <h1 style={styles.title}>Portafolio de Docente</h1>
           </div>
+          {/* Logo a la derecha */}
           <div style={styles.logoSection}>
-            <div style={styles.logoContainer}>
-              <div style={styles.logoCircle}>
-                <div style={styles.logoInner}>
-                  <div style={styles.logoText}>UNSAAC</div>
-                  <div style={styles.logoSubtext}>332 AÑOS</div>
-                </div>
-              </div>
-              <div style={styles.universityName}>
-                Universidad Nacional de<br />
-                San Antonio Abad del Cusco
-              </div>
-            </div>
+            <img 
+              src={logoUnsaac} 
+              alt="Logo" 
+              style={styles.logoImage}
+              onError={(e) => {
+                console.error('Error cargando imagen:', e);
+                console.log('Ruta intentada:', logoUnsaac);
+                e.target.style.display = 'none';
+              }}
+              onLoad={() => {
+                console.log('Imagen cargada correctamente');
+                console.log('Ruta exitosa:', logoUnsaac);
+              }}
+            />
           </div>
         </div>
       </div>
 
       {/* Contenido principal */}
       <div style={styles.content}>
-        <h2 style={styles.welcomeText}>Bienvenido al Portafolio Virtual</h2>
-        
-        <div style={styles.buttonsContainer}>
-          <button onClick={handleLogin} style={styles.mainButton}>
-            Iniciar Sesión
-          </button>
-          
-          <button onClick={handleRegister} style={styles.mainButton}>
-            Registrarse
-          </button>
-        </div>
+        {usuarioActual ? (
+          // Si está autenticado, mostrar la ventana de información
+          <Informacion usuario={usuarioActual} onRegistrarUsuario={handleRegister} />
+        ) : !showRegistro && !showLogin ? (
+          // Pantalla inicial con botones
+          <>
+            <h2 style={styles.welcomeText}>Bienvenido al Portafolio Virtual</h2>
+            <div style={styles.buttonsContainer}>
+              <button onClick={handleLogin} style={styles.mainButton}>
+                Iniciar Sesión
+              </button>
+              <button onClick={handleRegister} style={styles.mainButton}>
+                Registrarse
+              </button>
+            </div>
+          </>
+        ) : showLogin ? (
+          // Pantalla de login
+          <div style={styles.formContainer}>
+            <button onClick={cerrarLogin} style={styles.backButton}>
+              ← Volver
+            </button>
+            <IniciarSesion onLoginSuccess={() => setShowLogin(false)} />
+          </div>
+        ) : (
+          // Pantalla de registro
+          <div style={styles.formContainer}>
+            <button onClick={cerrarRegistro} style={styles.backButton}>
+              ← Volver
+            </button>
+            <RegistrarUsuario />
+          </div>
+        )}
       </div>
+
+      {/* Botón flotante de registrar usuario solo visible en Iniciar Sesión y si no está autenticado */}
+      {showLogin && !usuarioActual && (
+        <div style={registerStyles.registerContainer}>
+          <button
+            onClick={() => {
+              setShowRegistro(true);
+              setShowLogin(false);
+            }}
+            style={registerStyles.registerButton}
+          >
+            <div style={registerStyles.registerIcon}>+</div>
+          </button>
+          <div style={registerStyles.registerText}>
+            <div>Registrar</div>
+            <div>Usuario</div>
+          </div>
+        </div>
+      )}
 
       {/* Botón de ayuda flotante */}
       <div style={styles.helpContainer}>
         <button onClick={toggleHelp} style={styles.helpButton}>
           <div style={styles.helpIcon}>?</div>
         </button>
-        
         <div style={styles.helpText}>
           <div>Dudas y</div>
           <div>Consultas</div>
         </div>
-        
         {showHelp && (
           <div style={styles.helpTooltip}>
             <h3 style={styles.tooltipTitle}>Dudas y Consultas</h3>
@@ -113,10 +174,9 @@ const styles = {
     display: 'flex',
     justifyContent: 'space-between',
     alignItems: 'center',
-    padding: '40px 60px',
+    paddingLeft: '60px',
+    paddingRight: '0',
     height: '100%',
-    maxWidth: '1200px',
-    margin: '0 auto',
     width: '100%',
     boxSizing: 'border-box',
     position: 'relative',
@@ -124,6 +184,7 @@ const styles = {
   },
   titleSection: {
     zIndex: 2,
+    marginLeft: '40px',
   },
   title: {
     fontSize: '48px',
@@ -138,75 +199,36 @@ const styles = {
     zIndex: 2,
     display: 'flex',
     alignItems: 'center',
-    gap: '20px',
+    justifyContent: 'flex-end',
+    marginLeft: '60px',
+    marginRight: '160px',
+    paddingRight: '0',
   },
-  logoContainer: {
-    display: 'flex',
-    alignItems: 'center',
-    gap: '15px',
+  logoImage: {
+    width: '260px',
+    height: '260px',
+    objectFit: 'contain',
   },
-  logoCircle: {
-    width: '70px',
-    height: '70px',
-    borderRadius: '50%',
-    background: 'white',
-    display: 'flex',
-    alignItems: 'center',
-    justifyContent: 'center',
-    boxShadow: '0 2px 8px rgba(0,0,0,0.2)',
-    border: '3px solid #4a2c2a',
-  },
-  logoInner: {
-    textAlign: 'center',
-    background: '#4a2c2a',
-    color: 'white',
-    width: '100%',
-    height: '100%',
-    borderRadius: '50%',
-    display: 'flex',
-    flexDirection: 'column',
-    alignItems: 'center',
-    justifyContent: 'center',
-    position: 'relative',
-  },
-  logoText: {
-    color: 'white',
-    fontSize: '12px',
-    fontWeight: 'bold',
-    marginBottom: '2px',
-  },
-  logoSubtext: {
-    color: 'white',
-    fontSize: '8px',
-    fontWeight: 'bold',
-  },
-  universityName: {
-    color: 'white',
-    fontSize: '14px',
-    fontWeight: '600',
-    lineHeight: '1.3',
-    textAlign: 'left',
-    textShadow: '1px 1px 2px rgba(0,0,0,0.3)',
-  },
-  content: {
+   content: {
     flex: 1,
-    padding: '60px 60px 40px',
+    padding: '40px 60px 40px',
     background: '#f5f5f5',
     display: 'flex',
     flexDirection: 'column',
     alignItems: 'center',
-    justifyContent: 'center',
+    justifyContent: 'flex-start',
     maxWidth: '1200px',
     margin: '0 auto',
     width: '100%',
     boxSizing: 'border-box',
+    minHeight: 'calc(100vh - 200px)',
   },
   welcomeText: {
-    fontSize: '32px',
+    fontSize: '60px',
     fontWeight: '400',
     color: '#333',
     textAlign: 'center',
-    marginBottom: '60px',
+    marginBottom: '100px',
     fontFamily: 'serif',
   },
   buttonsContainer: {
@@ -228,6 +250,27 @@ const styles = {
     transition: 'all 0.3s ease',
     boxShadow: '0 4px 12px rgba(139, 69, 19, 0.3)',
     fontFamily: 'serif',
+  },
+  formContainer: {
+    width: '100%',
+    display: 'flex',
+    flexDirection: 'column',
+    alignItems: 'center',
+  },
+  backButton: {
+    background: '#6c757d',
+    color: 'white',
+    fontWeight: '400',
+    padding: '12px 24px',
+    border: 'none',
+    borderRadius: '20px',
+    cursor: 'pointer',
+    fontSize: '16px',
+    marginBottom: '30px',
+    transition: 'all 0.3s ease',
+    boxShadow: '0 2px 8px rgba(108, 117, 125, 0.3)',
+    fontFamily: 'serif',
+    alignSelf: 'flex-start',
   },
   helpContainer: {
     position: 'fixed',
@@ -286,6 +329,47 @@ const styles = {
     fontSize: '12px',
     margin: '0',
     lineHeight: '1.4',
+  },
+};
+
+// Estilos para el botón flotante de registrar usuario
+const registerStyles = {
+  registerContainer: {
+    position: 'fixed',
+    bottom: '40px',
+    left: '40px',
+    display: 'flex',
+    flexDirection: 'column',
+    alignItems: 'center',
+    zIndex: 1000,
+  },
+  registerButton: {
+    background: '#4a2c2a',
+    color: 'white',
+    border: 'none',
+    borderRadius: '50%',
+    width: '70px',
+    height: '70px',
+    cursor: 'pointer',
+    boxShadow: '0 4px 12px rgba(74, 44, 42, 0.4)',
+    transition: 'all 0.3s ease',
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginBottom: '10px',
+    fontSize: '32px',
+    fontWeight: 'bold',
+  },
+  registerIcon: {
+    fontSize: '32px',
+    fontWeight: 'bold',
+  },
+  registerText: {
+    textAlign: 'center',
+    fontSize: '12px',
+    color: '#333',
+    fontWeight: '500',
+    lineHeight: '1.2',
   },
 };
 

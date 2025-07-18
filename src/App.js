@@ -1,11 +1,17 @@
 import React from 'react';
+import { AuthProvider } from './AuthContext';
 import PortafolioDocente from './PortafolioDocente';
+import IniciarSesion from './IniciarSesion';
+import Informacion from './Informacion';
+
 
 function App() {
   return (
-    <div className="App">
-      <PortafolioDocente />
-    </div>
+    <AuthProvider>
+      <div className="App">
+        <PortafolioDocente />
+      </div>
+    </AuthProvider>
   );
 }
 
